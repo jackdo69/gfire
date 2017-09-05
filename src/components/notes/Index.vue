@@ -1,22 +1,47 @@
 <template>
-  <div class="notes">
-      <note v-for="note in notes" :note="note.title" >
+  <div class="notes" v-el:notes>
+      <note
+        v-for="note in notes"
+        :note="note"
+        >
       </note>
   </div>
 </template>
-
 <script>
-  import Firebase from 'firebase'
-  import Note from './Note'
-  export default {
-    components: {
-      Note
+import Firebase from 'firebase'
+import Masonry from 'masonry-layout'
+import Note from './Note'
+export default {
+  components: {
+    Note
+  },
+  data () {
+    return {
+      notes: []
     }
+  },
+  ready () {
+    let masonry = new Masonry(this.$els.notes, {
+      itemSelector: '.note',
+      columnWidth: 240,
+      gutter: 16,
+      fitWidth: true
+    })
+    let config = require('./config.json')
+    Firebase.initializeApp(config)
+    firebase.database().ref('notes').on('child_added', (snapshot) => {
+      let note = snapshot.val()
+      this.notes.unshift(note)
+      this.$nextTick(() => { // the new note hasn't been rendered yet, but in the nextTick, it will be rendered
+        masonry.reloadItems()
+        masonry.layout()
+      })
+    })
   }
+}
 </script>
-
 <style>
-  .notes{
-    padding: 0 100px;
-  }
+.notes{
+    margin: 0 auto;
+}
 </style>
